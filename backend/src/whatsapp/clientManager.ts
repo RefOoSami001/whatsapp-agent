@@ -6,6 +6,28 @@ import { handleIncomingMessage } from "../services/aiService";
 import { simulateDelayAndTyping } from "./messageUtils";
 import { MongoDBAuth } from "./mongoAuth";
 
+/** Chrome args required for headless in Docker/Koyeb; without these, QR often fails to generate. */
+const PUPPETEER_CHROME_ARGS = [
+  "--no-sandbox",
+  "--disable-setuid-sandbox",
+  "--disable-dev-shm-usage",
+  "--disable-gpu",
+  "--disable-software-rasterizer",
+  "--disable-extensions",
+  "--no-first-run",
+  "--no-zygote",
+  "--disable-background-networking",
+  "--disable-default-apps",
+  "--disable-sync",
+  "--metrics-recording-only",
+  "--mute-audio",
+  "--disable-hang-monitor",
+  "--disable-client-side-phishing-detection",
+  "--disable-popup-blocking",
+  "--disable-prompt-on-repost",
+  "--ignore-certificate-errors",
+];
+
 type InstanceId = string;
 
 interface ManagedClient {
@@ -50,15 +72,8 @@ class WhatsAppClientManager {
       authStrategy: new MongoDBAuth(instanceId),
       puppeteer: {
         headless: true,
-        executablePath: env.puppeteerExecutablePath,
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-          "--disable-gpu",
-          "--no-zygote",
-          "--disable-software-rasterizer",
-        ],
+        executablePath: env.puppeteerExecutablePath || undefined,
+        args: PUPPETEER_CHROME_ARGS,
       },
     };
 
@@ -75,10 +90,12 @@ class WhatsAppClientManager {
     } catch (err) {
       this.clients.delete(instanceId);
       this.qrCache.delete(instanceId);
-      const message = err instanceof Error ? err.message : "Failed to start browser";
       await Instance.findByIdAndUpdate(instanceId, { status: "error" });
       const io = getIo();
-      io.to(`instance:${instanceId}`).emit("instance:error", { instanceId, message });
+      io.to(`instance:${instanceId}`).emit("instance:error", {
+        instanceId,
+        message: err instanceof Error ? err.message : "Failed to start browser (check Puppeteer/Chrome in container)",
+      });
       throw err;
     }
   }
