@@ -48,7 +48,7 @@ class WhatsAppClientManager {
     const options: ClientOptions = {
       authStrategy: new MongoDBAuth(instanceId),
       puppeteer: {
-        headless: false,
+        headless: true,
         args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
       },
     };
