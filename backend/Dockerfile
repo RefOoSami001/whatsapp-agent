@@ -11,9 +11,13 @@ RUN apk add --no-cache \
     ca-certificates \
     ttf-freefont
 
+# Create cache directory for Puppeteer
+RUN mkdir -p /app/.cache/puppeteer && chmod -R 777 /app/.cache/puppeteer
+
 # Set Puppeteer to use the installed Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    PUPPETEER_CACHE_DIR=/app/.cache/puppeteer
 
 # Create app directory
 WORKDIR /app
