@@ -1,0 +1,19 @@
+# Render service configuration for deploying the backend API.
+#
+# To deploy on Render:
+# 1. Connect this repository to Render.
+# 2. Render will automatically detect this file and create the service below.
+# 3. Set required environment variables in the Render dashboard (MONGODB_URI, JWT_SECRET, GEMINI_API_KEY, etc.).
+
+services:
+  - type: web
+    name: whatsapp-ai-backend
+    env: docker
+    dockerfilePath: backend/Dockerfile
+    # Optional: you can set a plan (free, starter, standard, etc.).
+    # plan: free
+    autoDeploy: true
+    # Render automatically provides a PORT environment variable.
+    envVars:
+      - key: NODE_ENV
+        value: production

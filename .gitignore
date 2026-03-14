@@ -2,16 +2,19 @@
 node_modules/
 
 # Build
-dist/
+/dist/
+/backend/dist/
 *.tsbuildinfo
 
 # Environment and secrets
 .env
 .env.local
 .env.*.local
+/backend/.env
 
 # WhatsApp session cache
 .wwebjs_cache/
+/backend/.wwebjs_cache/
 
 # IDE and OS
 .idea/

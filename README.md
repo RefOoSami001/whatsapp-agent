@@ -44,6 +44,21 @@ npm run dev
 
 The API will be available at `http://localhost:4000`.
 
+## Deploying to Render
+
+This project includes a `render.yaml` configuration that makes it easy to deploy the backend as a Docker-backed Render Web Service.
+
+1. Push this repo to a Git provider (GitHub/GitLab/Bitbucket).
+2. In Render, create a new **Web Service** and connect your repo.
+3. Render will read `render.yaml` and build the service using `backend/Dockerfile`.
+4. In Render's dashboard, set the following environment variables (and any others you need):
+   - `MONGODB_URI`
+   - `JWT_SECRET`
+   - `GEMINI_API_KEY`
+   - `CLIENT_ORIGIN` (optional, defaults to `http://localhost:5173`)
+
+Render provides the `PORT` env var automatically, and the backend reads it via `process.env.PORT`.
+
 ## REST API (backend-only usage)
 
 You can fully control the system via REST without the frontend. Authenticate using `/api/auth/login` to obtain a JWT, then include it in `Authorization: Bearer <token>` for protected endpoints.
