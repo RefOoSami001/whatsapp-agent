@@ -1,5 +1,5 @@
-# Use Node.js 18 LTS for stability and Chrome compatibility (Koyeb supports 18.x)
-FROM node:18-slim
+# Node 20 LTS (required by @google/genai, mongoose, mongodb, fastify deps; Koyeb supports 20.x)
+FROM node:20-slim
 
 # Install Chrome dependencies and Google Chrome (required for Puppeteer/whatsapp-web.js on Koyeb)
 RUN apt-get update && apt-get install -y --no-install-recommends \
