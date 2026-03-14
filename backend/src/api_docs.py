@@ -36,7 +36,8 @@ class ApiClient:
         jwt_token: Optional JWT used for authenticated requests.
     """
 
-    base_url: str = "http://localhost:4000"
+    # NOTE: Avoid a trailing slash to prevent double-slash URL issues.
+    base_url: str = "https://refqoquizbot.onrender.com"
     jwt_token: Optional[str] = None
 
     @property
@@ -255,7 +256,7 @@ class ApiClient:
 def _example_usage() -> None:
     """Complete test: signup, create instance, get QR, wait for connection, send message."""
 
-    client = ApiClient(base_url=os.getenv("API_BASE_URL", "https://raafat.koyeb.app"))
+    client = ApiClient(base_url=os.getenv("API_BASE_URL", "https://refqoquizbot.onrender.com"))
     # 2. Login to get token
     print("\nLogging in...")
     resp = client.login("refoo@gmail.com", "refoo@gmail.com")

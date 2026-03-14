@@ -26,6 +26,11 @@ const PUPPETEER_CHROME_ARGS = [
   "--disable-popup-blocking",
   "--disable-prompt-on-repost",
   "--ignore-certificate-errors",
+  "--disable-web-security",
+  "--disable-features=VizDisplayCompositor",
+  "--user-data-dir=/tmp/chrome-data",
+  "--remote-debugging-port=9222",
+  "--single-process",
 ];
 
 type InstanceId = string;
