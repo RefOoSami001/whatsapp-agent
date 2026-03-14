@@ -1,24 +1,49 @@
-# Use Node.js 18 Alpine for smaller image
-FROM node:18-alpine
+# Use Node.js 18 slim for better Chrome compatibility
+FROM node:18-slim
 
-# Install Chromium and dependencies for Puppeteer (fallback)
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    freetype-dev \
-    harfbuzz \
+# Install Chrome dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
     ca-certificates \
-    ttf-freefont
+    procps \
+    libxss1 \
+    libgconf-2-4 \
+    libxtst6 \
+    libxrandr2 \
+    libasound2 \
+    libpangocairo-1.0-0 \
+    libatk1.0-0 \
+    libcairo-gobject2 \
+    libgtk-3-0 \
+    libgdk-pixbuf2.0-0 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxi6 \
+    libxtst6 \
+    libnss3 \
+    libcups2 \
+    libxss1 \
+    libxrandr2 \
+    libgconf-2-4 \
+    libxss1 \
+    libappindicator1 \
+    fonts-liberation \
+    lsb-release \
+    xdg-utils \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create cache directory for Puppeteer
-RUN mkdir -p /app/.cache/puppeteer && chmod -R 777 /app/.cache/puppeteer
+# Install Google Chrome
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set Puppeteer cache directory
-ENV PUPPETEER_CACHE_DIR=/app/.cache/puppeteer
-
-# Install Puppeteer browsers (downloads Chrome to cache)
-RUN npx puppeteer browsers install chrome
+# Set Puppeteer to use installed Chrome
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
 # Create app directory
 WORKDIR /app
