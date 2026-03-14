@@ -40,7 +40,7 @@ RUN curl -fSsL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor
 # Puppeteer: use system Chrome so QR works in container (no bundled Chromium)
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 # Prefer stable; fallback path is /usr/bin/google-chrome
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 
 WORKDIR /app
 
