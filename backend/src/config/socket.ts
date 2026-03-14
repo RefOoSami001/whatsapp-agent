@@ -1,12 +1,13 @@
 import { Server as HttpServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
+import { env } from "./env";
 
 let io: SocketIOServer | null = null;
 
 export const initSocket = (server: HttpServer): SocketIOServer => {
   io = new SocketIOServer(server, {
     cors: {
-      origin: true, // allow all origins in dev
+      origin: env.nodeEnv === "production" ? env.clientOrigin : true,
       methods: ["GET", "POST"],
       credentials: true,
     },

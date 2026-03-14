@@ -1,8 +1,8 @@
-# Use Node.js 18 slim for better Chrome compatibility
+# Use Node.js 18 LTS for stability and Chrome compatibility (Koyeb supports 18.x)
 FROM node:18-slim
 
-# Install Chrome dependencies
-RUN apt-get update && apt-get install -y \
+# Install Chrome dependencies and Google Chrome (required for Puppeteer/whatsapp-web.js on Koyeb)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     gnupg \
     ca-certificates \
@@ -21,47 +21,36 @@ RUN apt-get update && apt-get install -y \
     libxcursor1 \
     libxdamage1 \
     libxi6 \
-    libxtst6 \
     libnss3 \
     libcups2 \
-    libxss1 \
-    libxrandr2 \
-    libgconf-2-4 \
-    libxss1 \
     libappindicator1 \
     fonts-liberation \
-    lsb-release \
     xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+# Add Google Chrome repo (signed-by method; apt-key is deprecated)
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update \
-    && apt-get install -y google-chrome-stable \
+    && apt-get install -y --no-install-recommends google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Puppeteer to use installed Chrome
+# Puppeteer/Chrome env for container (Koyeb runs in Docker)
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
+    NODE_ENV=production
 
-# Create app directory
+# App listens on PORT; Koyeb can override this (e.g. 8000)
+ENV PORT=4000
+EXPOSE 4000
+
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies (including dev for build)
 RUN npm ci
 
-# Copy source code
 COPY . .
+RUN npm run build \
+    && npm prune --omit=dev
 
-# Build the application
-RUN npm run build
-
-# Expose port
-EXPOSE 5000
-
-# Start the application
-CMD ["npm", "start"]
+CMD ["node", "dist/server.js"]

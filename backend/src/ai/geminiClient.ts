@@ -17,11 +17,18 @@ export const generateReply = async ({
   apiKey,
 }: GeminiRequest): Promise<GeminiResponse> => {
   const ai = apiKey ? new GoogleGenAI({ apiKey }) : defaultAI;
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-  });
-
-  return { text: (response.text ?? "").trim() };
+  try {
+    const response = await ai.models.generateContent({
+      model: env.geminiModel,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    });
+    const text = typeof response.text === "string" ? response.text : "";
+    return { text: text.trim() || "Thank you for your message." };
+  } catch (err) {
+    if (env.nodeEnv === "development") {
+      console.error("[Gemini] generateContent error:", err);
+    }
+    throw err;
+  }
 };
 

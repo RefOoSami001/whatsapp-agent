@@ -11,7 +11,7 @@ const buildServer = () => {
   });
 
   app.register(cors, {
-    origin: true, // allow all origins in dev to support any localhost port
+    origin: env.nodeEnv === "production" ? env.clientOrigin : true,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   });

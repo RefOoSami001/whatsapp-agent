@@ -18,6 +18,7 @@ NOTE: This is documentation-friendly code, not a production SDK. It uses the
 from __future__ import annotations
 
 import os
+import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
@@ -252,40 +253,90 @@ class ApiClient:
 
 
 def _example_usage() -> None:
-    """Example usage of this client.
+    """Complete test: signup, create instance, get QR, wait for connection, send message."""
 
-    Notes:
-        - Replace values with real credentials.
-        - This function is for documentation/demo purposes only.
-    """
-    client = ApiClient(base_url=os.getenv("API_BASE_URL", "http://localhost:4000"))
+    client = ApiClient(base_url=os.getenv("API_BASE_URL", "https://raafat.koyeb.app"))
+    # 2. Login to get token
+    print("\nLogging in...")
+    resp = client.login("refoo@gmail.com", "refoo@gmail.com")
+    print("Login response:", resp.status_code)
+    if resp.status_code != 200:
+        print("Login failed:", resp.json())
+        return
 
-    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OWI0NjQzZWJiNTlmOWU4Mjk2YzBjYTYiLCJpYXQiOjE3NzM0NDAyNDQsImV4cCI6MTc3NDA0NTA0NH0.0-z44X_681rpmWUexls23duxHFYm3I3YR2_GgP8qcKw"
+    token_data = resp.json()
+    client.jwt_token = token_data["token"]
+    print("Logged in successfully")
 
-    client.jwt_token = token
+    # # 3. Create instance
+    # print("\nCreating instance...")
+    # resp = client.create_instance("Test Instance")
+    # print("Create instance response:", resp.status_code)
+    # if resp.status_code != 201:
+    #     print("Create instance failed:", resp.json())
+    #     return
 
-    # # Start the instance
-    # resp = client.start_instance("69b48dcfdf43d44ceb1cc47f")
-    # print("Start instance response:", resp.status_code, resp.json())
+    # instance_data = resp.json()
+    instance_id = "69b4ac22f5f3e19f1d0e2036"
+    print(f"Created instance: {instance_id}")
 
-    # # Get QR code for connection
-    # resp = client.get_instance_qr('69b48dcfdf43d44ceb1cc47f')
-    # print("Get instance QR response:", resp.status_code, resp.json())
-    # if resp.status_code == 200:
-    #     qr_data = resp.json()
-    #     print("QR Code:", qr_data.get('qr'))
-    #     print("Please scan the QR code with WhatsApp on your phone.")
-    #     input("Press Enter after scanning the QR code...")
+    # 4. Start instance
+    print("\nStarting instance...")
+    resp = client.start_instance(instance_id)
+    print("Start instance response:", resp.status_code)
 
-    # # Wait a bit for connection to establish
-    # input("Press Enter after the instance shows as connected...")
 
-    # Send a test message
+    # 5. Wait for QR code
+    print("\nWaiting for QR code...")
+    qr_code = None
+    for i in range(30):  # Wait up to 30 attempts (about 30 seconds)
+        resp = client.get_instance_qr(instance_id)
+        if resp.status_code == 200:
+            qr_data = resp.json()
+            qr_code = qr_data.get("qr")
+            if qr_code:
+                print("QR Code generated!")
+                print("Please scan this QR code with WhatsApp on your phone:")
+                print(qr_code)
+                break
+        elif resp.status_code == 202:
+            print(f"QR not ready yet... attempt {i+1}/30")
+        else:
+            print("Error getting QR:", resp.status_code, resp.json())
+            return
+        time.sleep(1)
+
+    if not qr_code:
+        print("QR code never became available")
+        return
+
+    # 6. Wait for connection
+    print("\nWaiting for WhatsApp connection...")
+    for i in range(60):  # Wait up to 60 seconds
+        resp = client.get_instance(instance_id)
+        if resp.status_code == 200:
+            instance_info = resp.json()
+            status = instance_info.get("status")
+            print(f"Status: {status} (attempt {i+1}/60)")
+            if status == "connected":
+                print("WhatsApp connected successfully!")
+                break
+        else:
+            print("Error checking status:", resp.status_code, resp.json())
+            return
+        time.sleep(1)
+
+    # 7. Send test message
+    print("\nSending test message...")
     resp = client.send_instance_message(
-        instance_id="69b48dcfdf43d44ceb1cc47f",
+        instance_id=instance_id,
         contact_id="+201011508719",
-        text="Hello from the API client!",
+        text="Hello! This is a test message from the deployed WhatsApp AI agent.",
     )
-    print("Send message response:", resp.status_code, resp.json())
+    print("Send message response:", resp.status_code)
+    if resp.status_code == 200:
+        print("Message sent successfully!")
+    else:
+        print("Failed to send message:", resp.json())
 if __name__ == "__main__":
     _example_usage()

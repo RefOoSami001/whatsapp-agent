@@ -1,6 +1,7 @@
 import { Client, ClientOptions, Message } from "whatsapp-web.js";
 import { Instance, IInstance } from "../models/Instance";
 import { getIo } from "../config/socket";
+import { env } from "../config/env";
 import { handleIncomingMessage } from "../services/aiService";
 import { simulateDelayAndTyping } from "./messageUtils";
 import { MongoDBAuth } from "./mongoAuth";
@@ -49,8 +50,15 @@ class WhatsAppClientManager {
       authStrategy: new MongoDBAuth(instanceId),
       puppeteer: {
         headless: true,
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+        executablePath: env.puppeteerExecutablePath,
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--disable-gpu",
+          "--no-zygote",
+          "--disable-software-rasterizer",
+        ],
       },
     };
 
@@ -62,7 +70,17 @@ class WhatsAppClientManager {
     instance.status = "connecting";
     await instance.save();
 
-    await client.initialize();
+    try {
+      await client.initialize();
+    } catch (err) {
+      this.clients.delete(instanceId);
+      this.qrCache.delete(instanceId);
+      const message = err instanceof Error ? err.message : "Failed to start browser";
+      await Instance.findByIdAndUpdate(instanceId, { status: "error" });
+      const io = getIo();
+      io.to(`instance:${instanceId}`).emit("instance:error", { instanceId, message });
+      throw err;
+    }
   }
 
   async stopInstance(instanceId: string): Promise<void> {
