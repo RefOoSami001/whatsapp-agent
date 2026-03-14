@@ -1,7 +1,7 @@
 # Use Node.js 18 Alpine for smaller image
 FROM node:18-alpine
 
-# Install Chromium and dependencies for Puppeteer
+# Install Chromium and dependencies for Puppeteer (fallback)
 RUN apk add --no-cache \
     chromium \
     nss \
@@ -14,10 +14,11 @@ RUN apk add --no-cache \
 # Create cache directory for Puppeteer
 RUN mkdir -p /app/.cache/puppeteer && chmod -R 777 /app/.cache/puppeteer
 
-# Set Puppeteer to use the installed Chromium
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    PUPPETEER_CACHE_DIR=/app/.cache/puppeteer
+# Set Puppeteer cache directory
+ENV PUPPETEER_CACHE_DIR=/app/.cache/puppeteer
+
+# Install Puppeteer browsers (downloads Chrome to cache)
+RUN npx puppeteer browsers install chrome
 
 # Create app directory
 WORKDIR /app
